@@ -1,55 +1,30 @@
 const express = require('express')
 const app = express()
 const path = require('path')
-const { products } = require('./data')
+const peopleR = require('./routes/people')
+const { products, people } = require('./data')
+
+app.use('/api', peopleR)
 
 app.use(express.static('./public'))
+app.use(express.urlencoded({extended: false}))
+app.use(express.json())
 
-app.get('/api', (req, res) => {
-    res.send('<h1>Home Page</h1> <a href="/api/products">Products</a>')
+app.get('/users', (req, res) => {
+    res.json(people)
 })
 
-app.get('/api/products', (req, res) => {
-    const {search, limit} = req.query
-    let queryProducts = products
-    if (search) {
-        if (search) {
-            queryProducts = products.filter((product) => {
-                return product.name.startsWith(search)
-            })
-        }
+app.post('/users/add/', (req, res) => {
+    const { name } = req.body
+    if (name) {
+        people.push({id: people.length + 1, name: name})
+        return res.status(201).json(people)
     }
-
-    if (limit) {
-        if (search) {
-            queryProducts = queryProducts.slice(0, +limit)
-        }
-    }
-
-    if (search && queryProducts.length < 1 && +limit !== 0) {
-        return res.send('<h1>No product match with such query</h1>')
-    }
-
-    const newProducts = queryProducts.map((product) => {
-        const { id, name, image } = product
-        return {id, name, image}
-    })
-    res.json(newProducts )
+    res.status(400).json({error: 'No Credentials added'})
 })
 
-app.get(`/api/products/:productId`, (req, res) => {
-    const { productId } = req.params
-    const product = products.find(item => item.id === +productId)
-    if (!product) {
-        return res.status(404).send('Product does not exitst')
-    }
-    console.log(product)
-    res.json(product)
-})
-
-app.get('/api/query', (req, res) => {
-    const {query} = req
-    res.json({'req': 'Request for query params', data: query})
+app.post('/users', (req, res) => {
+    res.json(req.body)
 })
 
 app.get('/', (req, res) => {
